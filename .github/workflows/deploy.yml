@@ -1,0 +1,122 @@
+name: Déploiement Galerie Photos
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Install ImageMagick
+      run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+    - name: Create directories
+      run: |
+        mkdir -p optimized/{thumbnails,medium,original}
+        mkdir -p css js
+
+    - name: Optimize images
+      run: |
+        if [ -d "photos" ] && [ "$(ls -A photos)" ]; then
+          echo "Optimisation des images..."
+          find photos -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | while read img; do
+            filename=$(basename "$img")
+            name_without_ext="${filename%.*}"
+
+            echo "Traitement de $filename"
+
+            # Thumbnail 300x300
+            magick "$img" -resize 300x300^ -gravity center -extent 300x300 -quality 85 "optimized/thumbnails/${name_without_ext}.jpg"
+
+            # Version moyenne 800px max
+            magick "$img" -resize 800x800\> -quality 90 "optimized/medium/${name_without_ext}.jpg"
+
+            # Version originale optimisée (max 1920px)
+            magick "$img" -resize 1920x1920\> -quality 95 "optimized/original/${name_without_ext}.jpg"
+          done
+        else
+          echo "Aucune photo trouvée dans le dossier 'photos'"
+        fi
+
+    - name: Generate photos.json
+      run: |
+        cat > photos.json << 'EOF'
+        {
+          "photos": [
+        EOF
+
+        first=true
+        if [ -d "optimized/thumbnails" ] && [ "$(ls -A optimized/thumbnails)" ]; then
+          find optimized/thumbnails -name "*.jpg" | sort | while read thumb; do
+            filename=$(basename "$thumb" .jpg)
+
+            # Obtenir les dimensions
+            if [ -f "optimized/medium/${filename}.jpg" ]; then
+              dimensions=$(magick identify -format "%wx%h" "optimized/medium/${filename}.jpg" 2>/dev/null || echo "800x600")
+              width=$(echo "$dimensions" | cut -d'x' -f1)
+              height=$(echo "$dimensions" | cut -d'x' -f2)
+            else
+              width=800
+              height=600
+            fi
+
+            if [ "$first" = true ]; then
+              first=false
+            else
+              echo "," >> photos.json
+            fi
+
+            cat >> photos.json << EOF
+            {
+              "id": "${filename}",
+              "thumbnail": "optimized/thumbnails/${filename}.jpg",
+              "medium": "optimized/medium/${filename}.jpg",
+              "original": "optimized/original/${filename}.jpg",
+              "width": ${width},
+              "height": ${height},
+              "title": "${filename}"
+            }
+        EOF
+          done
+        fi
+
+        cat >> photos.json << 'EOF'
+          ]
+        }
+        EOF
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '.'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

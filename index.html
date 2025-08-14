@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galerie Photos</title>
+    <meta name="description" content="Ma galerie de photos personnelle">
+    
+    <!-- Préchargement des ressources critiques -->
+    <link rel="preload" href="css/style.css" as="style">
+    <link rel="preload" href="js/gallery.js" as="script">
+    
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Meta tags pour le partage social -->
+    <meta property="og:title" content="Galerie Photos">
+    <meta property="og:description" content="Ma galerie de photos personnelle">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://launayann.github.io/galeries-photos">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="title">📸 Ma Galerie Photos</h1>
+            <p class="subtitle">Collection de mes plus beaux clichés</p>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Barre de filtres/recherche -->
+            <div class="controls">
+                <div class="search-box">
+                    <input type="text" id="search" placeholder="Rechercher une photo..." aria-label="Rechercher">
+                    <button type="button" id="search-clear" aria-label="Effacer la recherche">×</button>
+                </div>
+                <div class="view-toggle">
+                    <button type="button" class="view-btn active" data-view="grid" aria-label="Vue grille">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 11h8V3H3v8zm0 10h8v-8H3v8zm10-10h8V3h-8v8zm0 10h8v-8h-8v8z"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="view-btn" data-view="masonry" aria-label="Vue mosaïque">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 3h8v8H3V3zm10 0h8v6h-8V3zM3 13h8v8H3v-8zm10 2h8v6h-8v-6z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Compteur de photos -->
+            <div class="photo-count">
+                <span id="photo-counter">Chargement...</span>
+            </div>
+
+            <!-- Galerie -->
+            <div id="gallery" class="gallery grid-view">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Chargement des photos...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox" aria-hidden="true">
+        <div class="lightbox-overlay"></div>
+        <div class="lightbox-content">
+            <button class="lightbox-close" aria-label="Fermer">&times;</button>
+            <button class="lightbox-prev" aria-label="Photo précédente">‹</button>
+            <button class="lightbox-next" aria-label="Photo suivante">›</button>
+            <div class="lightbox-image-container">
+                <img id="lightbox-image" src="" alt="" loading="lazy">
+            </div>
+            <div class="lightbox-info">
+                <h3 id="lightbox-title"></h3>
+                <div class="lightbox-counter">
+                    <span id="lightbox-counter"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template pour les photos -->
+    <template id="photo-template">
+        <div class="photo-item" data-id="">
+            <div class="photo-container">
+                <img class="photo-image" src="" alt="" loading="lazy">
+                <div class="photo-overlay">
+                    <button class="photo-button" aria-label="Voir en grand">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-2 0-2 2-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="photo-title"></div>
+        </div>
+    </template>
+
+    <script src="js/gallery.js"></script>
+</body>
+</html>
